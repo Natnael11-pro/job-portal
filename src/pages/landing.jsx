@@ -23,16 +23,16 @@ const LandingPage = () => {
         <h1 className="flex flex-col items-center justify-center gradient-title font-extrabold text-4xl sm:text-6xl lg:text-8xl tracking-tighter py-4">
           Find Your Dream Job
           <span className="flex items-center gap-2 sm:gap-6">
-            and get
+            and get Hired
             <img
-              src="/logo.png"
+              src="/banner.jpeg"
               className="h-14 sm:h-24 lg:h-32"
               alt="Hirrd Logo"
             />
           </span>
         </h1>
         <p className="text-gray-300 sm:mt-4 text-xs sm:text-xl">
-          Explore thousands of job listings or find the perfect candidate
+        Explore jobs which are posted or find the perfect candidates
         </p>
       </section>
       <div className="flex gap-6 justify-center">
