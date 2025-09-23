@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
-import { State } from "country-state-city";
+import { City } from "country-state-city";
 import { BarLoader } from "react-spinners";
 import useFetch from "@/hooks/use-fetch";
 
@@ -50,6 +50,7 @@ const JobListing = () => {
   }, [isLoaded]);
 
   useEffect(() => {
+    // Call jobs fetch whenever relevant filters change
     if (isLoaded) fnJobs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, location, company_id, searchQuery]);
@@ -57,9 +58,9 @@ const JobListing = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     let formData = new FormData(e.target);
-
     const query = formData.get("search-query");
-    if (query) setSearchQuery(query);
+    // Always set the state (allows clearing when input is empty)
+    setSearchQuery(query ? String(query) : "");
   };
 
   const clearFilters = () => {
@@ -86,6 +87,8 @@ const JobListing = () => {
           placeholder="Search Jobs by Title.."
           name="search-query"
           className="h-full flex-1  px-4 text-md"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
         <Button type="submit" className="h-full sm:w-28" variant="blue">
           Search
@@ -99,7 +102,7 @@ const JobListing = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              {State.getStatesOfCountry("IN").map(({ name }) => {
+              {City.getCitiesOfCountry("ET").map(({ name }) => {
                 return (
                   <SelectItem key={name} value={name}>
                     {name}

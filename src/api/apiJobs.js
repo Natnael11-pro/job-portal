@@ -14,7 +14,7 @@ export async function getJobs(token, { location, company_id, searchQuery }) {
   if (company_id) {
     query = query.eq("company_id", company_id);
   }
-
+  
   if (searchQuery) {
     query = query.ilike("title", `%${searchQuery}%`);
   }
