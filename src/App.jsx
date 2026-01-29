@@ -1,27 +1,31 @@
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import { lazy, Suspense } from "react";
 
 import AppLayout from "./layouts/app-layout";
 import ProtectedRoute from "./components/protected-route";
 import { ThemeProvider } from "./components/theme-provider";
-
-import LandingPage from "./pages/landing";
-import Onboarding from "./pages/onboarding";
-import PostJob from "./pages/post-job";
-import JobListing from "./pages/jobListing";
-import MyJobs from "./pages/my-jobs";
-import SavedJobs from "./pages/saved-jobs";
-import JobPage from "./pages/job";
+import { BarLoader } from "react-spinners";
 
 import "./App.css";
+
+// Lazy-loaded pages
+const LandingPage = lazy(() => import("./pages/landing"));
+const Onboarding = lazy(() => import("./pages/onboarding"));
+const PostJob = lazy(() => import("./pages/post-job"));
+const JobListing = lazy(() => import("./pages/jobListing"));
+const MyJobs = lazy(() => import("./pages/my-jobs"));
+const SavedJobs = lazy(() => import("./pages/saved-jobs"));
+const JobPage = lazy(() => import("./pages/job"));
+
+const Loader = () => (
+  <BarLoader width={"100%"} color="#36d7b7" />
+);
 
 const router = createBrowserRouter([
   {
     element: <AppLayout />,
     children: [
-      {
-        path: "/",
-        element: <LandingPage />,
-      },
+      { path: "/", element: <LandingPage /> },
       {
         path: "/onboarding",
         element: (
@@ -77,7 +81,9 @@ const router = createBrowserRouter([
 function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <RouterProvider router={router} />
+      <Suspense fallback={<Loader />}>
+        <RouterProvider router={router} />
+      </Suspense>
     </ThemeProvider>
   );
 }

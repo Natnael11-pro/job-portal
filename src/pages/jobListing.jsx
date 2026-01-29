@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { City } from "country-state-city";
 import { BarLoader } from "react-spinners";
-import useFetch from "@/hooks/use-fetch";
 
+import useFetch from "@/hooks/use-fetch";
 import JobCard from "@/components/job-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,146 +19,126 @@ import {
 import { getCompanies } from "@/api/apiCompanies";
 import { getJobs } from "@/api/apiJobs";
 
-const JobListing = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [location, setLocation] = useState("");
-  const [company_id, setCompany_id] = useState("");
+// Debounce helper
+const useDebounce = (value, delay = 500) => {
+  const [debounced, setDebounced] = useState(value);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debounced;
+};
+
+const JobListing = () => {
   const { isLoaded } = useUser();
 
-  const {
-    // loading: loadingCompanies,
-    data: companies,
-    fn: fnCompanies,
-  } = useFetch(getCompanies);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [location, setLocation] = useState("");
+  const [companyId, setCompanyId] = useState("");
 
+  const debouncedSearch = useDebounce(searchQuery);
+
+  const { data: companies, fn: fnCompanies } = useFetch(getCompanies);
   const {
     loading: loadingJobs,
     data: jobs,
     fn: fnJobs,
   } = useFetch(getJobs, {
     location,
-    company_id,
-    searchQuery,
+    company_id: companyId,
+    searchQuery: debouncedSearch,
   });
 
+  // Memoized cities (performance fix)
+  const cities = useMemo(
+    () => City.getCitiesOfCountry("ET") || [],
+    []
+  );
+
   useEffect(() => {
-    if (isLoaded) {
-      fnCompanies();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (isLoaded) fnCompanies();
   }, [isLoaded]);
 
   useEffect(() => {
-    // Call jobs fetch whenever relevant filters change
     if (isLoaded) fnJobs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, location, company_id, searchQuery]);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    let formData = new FormData(e.target);
-    const query = formData.get("search-query");
-    // Always set the state (allows clearing when input is empty)
-    setSearchQuery(query ? String(query) : "");
-  };
+  }, [isLoaded, location, companyId, debouncedSearch]);
 
   const clearFilters = () => {
     setSearchQuery("");
-    setCompany_id("");
     setLocation("");
+    setCompanyId("");
   };
 
   if (!isLoaded) {
-    return <BarLoader className="mb-4" width={"100%"} color="#36d7b7" />;
+    return <BarLoader width={"100%"} color="#36d7b7" />;
   }
 
   return (
-    <div className="">
-      <h1 className="gradient-title font-extrabold text-6xl sm:text-7xl text-center pb-8">
+    <div>
+      <h1 className="gradient-title font-extrabold text-6xl text-center pb-8">
         Latest Jobs
       </h1>
-      <form
-        onSubmit={handleSearch}
-        className="h-14 flex flex-row w-full gap-2 items-center mb-3"
-      >
-        <Input
-          type="text"
-          placeholder="Search Jobs by Title.."
-          name="search-query"
-          className="h-full flex-1  px-4 text-md"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <Button type="submit" className="h-full sm:w-28" variant="blue">
-          Search
-        </Button>
-      </form>
+
+      <Input
+        placeholder="Search jobs by title..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="mb-3"
+        aria-label="Search jobs"
+      />
 
       <div className="flex flex-col sm:flex-row gap-2">
-        <Select value={location} onValueChange={(value) => setLocation(value)}>
+        <Select value={location} onValueChange={setLocation}>
           <SelectTrigger>
             <SelectValue placeholder="Filter by Location" />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              {City.getCitiesOfCountry("ET").map(({ name }) => {
-                return (
-                  <SelectItem key={name} value={name}>
-                    {name}
-                  </SelectItem>
-                );
-              })}
+              {cities.map(({ name }) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                </SelectItem>
+              ))}
             </SelectGroup>
           </SelectContent>
         </Select>
 
-        <Select
-          value={company_id}
-          onValueChange={(value) => setCompany_id(value)}
-        >
+        <Select value={companyId} onValueChange={setCompanyId}>
           <SelectTrigger>
             <SelectValue placeholder="Filter by Company" />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              {companies?.map(({ name, id }) => {
-                return (
-                  <SelectItem key={name} value={id}>
-                    {name}
-                  </SelectItem>
-                );
-              })}
+              {companies?.map(({ id, name }) => (
+                <SelectItem key={id} value={id}>
+                  {name}
+                </SelectItem>
+              ))}
             </SelectGroup>
           </SelectContent>
         </Select>
-        <Button
-          className="sm:w-1/2"
-          variant="destructive"
-          onClick={clearFilters}
-        >
+
+        <Button variant="destructive" onClick={clearFilters}>
           Clear Filters
         </Button>
       </div>
 
-      {loadingJobs && (
-        <BarLoader className="mt-4" width={"100%"} color="#36d7b7" />
-      )}
+      {loadingJobs && <BarLoader className="mt-4" width={"100%"} />}
 
-      {loadingJobs === false && (
+      {!loadingJobs && (
         <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {jobs?.length ? (
-            jobs.map((job) => {
-              return (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  savedInit={job?.saved?.length > 0}
-                />
-              );
-            })
+            jobs.map((job) => (
+              <JobCard
+                key={job.id}
+                job={job}
+                savedInit={job.saved?.length > 0}
+              />
+            ))
           ) : (
-            <div>No Jobs Found 😢</div>
+            <p>No jobs found.</p>
           )}
         </div>
       )}
