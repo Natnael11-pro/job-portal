@@ -40,7 +40,7 @@ const PostJob = () => {
     register,
     handleSubmit,
     control,
-    formState: { errors },
+    formCity: { errors },
   } = useForm({
     defaultValues: { location: "", company_id: "", requirements: "" },
     resolver: zodResolver(schema),

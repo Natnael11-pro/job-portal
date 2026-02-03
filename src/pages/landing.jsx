@@ -32,7 +32,11 @@ const LandingPage = () => {
           </span>
         </h1>
         <p className="text-gray-300 sm:mt-4 text-xs sm:text-xl">
+<<<<<<< HEAD
           Explore jobs which are posted or find the perfect candidates
+=======
+        Explore jobs which are posted or find the perfect candidates
+>>>>>>> f8e90d9850112fbfc694f118913ed8286d4f6253
         </p>
       </section>
       <div className="flex gap-6 justify-center">
